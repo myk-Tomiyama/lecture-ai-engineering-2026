@@ -1,0 +1,119 @@
+# STEP1
+uv run python -m app.agent --list-tools
+モデルに見えているツール: 1 個
+
+[search_materials]
+  第1〜3回の本講義資料を検索し、関連ページの本文・タイトル・ページ番号を返す。
+  
+  queryに調べたい内容を指定する。
+  引数: {"query": {"type": "string"}}
+
+
+[server] glossary: コマンドで起動（uv run python -m app.mcp_server）
+モデルに見えているツール: 1 個
+
+[glossary_search_glossary]
+  講座の用語集から用語を検索し、定義と、どの回で扱うかを返す。
+  
+  AIエンジニアリングの用語や、この講座（AIE2026）に固有の言葉について
+  答える前に使うこと。query には調べたい用語を1つだけ入れる（例: "LoRA"）。
+  引数: {"query": {"title": "Query", "type": "string"}}
+
+
+
+# STEP2
+  uv run python -m app.mcp_agent --trace "AIE2026の講座の宿題 にある「3レベル」とは何ですか？"
+[server] glossary: コマンドで起動（uv run python -m app.mcp_server）
+[model] gemini-3.5-flash-lite
+[tools] MCP サーバー（app/mcp_servers.json）
+AIE2026の宿題における「3レベル」とは、宿題の難易度や取り組み方の構成を表すもので、以下の3段階に分かれています。
+
+1. **基礎**: 講義内容の確認（知識の定着を目的としたもの）
+2. **実装**: 自分でコードを書く（実際に手を動かして理解を深めるもの）
+3. **発展**: 調査や試行（より高度な内容や応用的な課題に挑むもの）
+
+これら3つのレベルのうち、**どれか1つに取り組めばその回の宿題は完了**となります（原則として採点は行われません）。
+
+どのレベルに取り組むかはご自身の学習進度や目的に合わせて選んでみてください。もし「どのレベルから手をつければいいか」「具体的にどう進めたらいいか」迷ったときは、講義内容やご自身の現在の理解度に合わせて考えてみるとヒントが見えてくるはずですよ！
+
+（関係する回：第1回）
+
+--- trace ---
+[tool call]   glossary_search_glossary({'query': '3レベル'})
+[tool return] glossary_search_glossary -> [{"term": "宿題の3レベル", "lecture": 1, "definition": "AIE2026の宿題の構成。「基礎（講義内容の確認）」「実装（自分でコードを書く）」「発展（調査や試行）」の3段階があり、どれか1つに取り組…
+[usage] 入力 715 tokens / 出力 236 tokens / モデル応答 2 回
+
+
+
+# STEP3
+uv run python -m app.mcp_agent --trace "https://modelcontextprotocol.io/ の冒頭を日本語で3行に要約して"
+[server] glossary: コマンドで起動（uv run python -m app.mcp_server）
+[server] fetch: コマンドで起動（uvx mcp-server-fetch==2026.11.11 --no-readability-js）
+[model] gemini-3.5-flash-lite
+[tools] MCP サーバー（app/mcp_servers.json）
+HTTP Request: GET https://modelcontextprotocol.io/robots.txt "HTTP/1.1 200 OK"
+HTTP Request: GET https://modelcontextprotocol.io/ "HTTP/1.1 307 Temporary Redirect"
+HTTP Request: GET https://modelcontextprotocol.io/robots.txt "HTTP/1.1 200 OK"
+HTTP Request: GET https://modelcontextprotocol.io/docs/2026-07-28/getting-started/intro.md "HTTP/1.1 200 OK"
+Model Context Protocol（MCP）は、AIアプリケーションを外部のデータソース、ツール、ワークフローに接続するためのオープンソース標準規格です。
+AIにとっての「USB-Cポート」のような役割を果たし、多様な外部システムと標準化された方法で連携できるようにします。
+これにより、開発者は統合の手間を減らすことができ、AIアシスタントやエージェントの機能や利便性を大きく高めることが可能です。
+
+--- trace ---
+[tool call]   fetch_fetch({'url': 'https://modelcontextprotocol.io/'})
+[tool return] fetch_fetch -> Contents of https://modelcontextprotocol.io/:
+> ## Documentation Index
+> Fetch the complete documentation index at: http…
+[usage] 入力 2,230 tokens / 出力 115 tokens / モデル応答 2 回
+
+
+
+# STEP4
+uv run python -m app.mcp_agent --trace \
+  "AWSのドキュメントを検索して、Amazon S3 のバージョニングを2行で説明して"
+[server] glossary: コマンドで起動（uv run python -m app.mcp_server）
+[server] fetch: コマンドで起動（uvx mcp-server-fetch==2026.11.11 --no-readability-js）
+[server] aws: URL に接続（https://knowledge-mcp.global.api.aws）
+[model] gemini-3.5-flash-lite
+[tools] MCP サーバー（app/mcp_servers.json）
+Amazon S3 のバージョニングは、同一のバケット内で同じオブジェクトの複数のバリアント（世代）を保持し、すべてのバージョンの保存、取得、復元を行える機能です。
+これにより、ユーザーの誤操作やアプリケーションの不具合によるデータの意図しない上書きや削除から、簡単にデータをリカバリできるようになります。
+
+--- trace ---
+[tool call]   aws_aws___search_documentation({'topics': ['general'], 'search_phrase': 'Amazon S3 バージョニング 概要'})
+[tool return] aws_aws___search_documentation -> {'content': {'result': [{'rank_order': 1, 'title': 'querying-aws-s3', 'skill_description': 'Queries S3 object metadata, …
+[tool call]   aws_aws___search_documentation({'search_phrase': 'Using versioning Amazon S3', 'topics': ['general']})
+[tool return] aws_aws___search_documentation -> {'content': {'result': [{'rank_order': 1, 'title': 'What is Amazon S3?', 'context': '### S3 Versioning\n\nYou can use S3…
+[usage] 入力 11,152 tokens / 出力 142 tokens / モデル応答 3 回
+
+
+
+
+# 宿題
+uv run python -m app.mcp_agent --trace \
+  "第2回では何を学びますか？"
+[server] glossary: コマンドで起動（uv run python -m app.mcp_server）
+[server] fetch: コマンドで起動（uvx mcp-server-fetch==2026.11.11 --no-readability-js）
+[server] aws: URL に接続（https://knowledge-mcp.global.api.aws）
+[model] gemini-3.5-flash-lite
+[tools] MCP サーバー（app/mcp_servers.json）
+第2回では、「**ファインチューニングとLoRA**」について学びます。
+
+### 主な内容とねらい
+- **事前学習とファインチューニングの違い**: 汎用的な言語能力を身につけたモデルを目的に合わせて追加学習させる仕組みや、向く場面・向かない場面を学びます。
+- **SFT（教師あり微調整）**: 入力と望ましい出力のペアを用いて学習させる手法とそのポイントを確認します。
+- **PEFTとLoRA**: すべてのパラメータを更新するのではなく、小さな低ランク行列（アダプタ）だけを学習することで、メモリやコストを大幅に削減するLoRAの考え方を学びます。
+- **過学習への注意**: 学習データへの過剰適応を防ぐための考え方なども扱います。
+- **演習**: Google Colab上で小さなモデルを用いたLoRA学習を体験し、学習前後の変化を確認します。
+
+関連回：第2回
+
+--- trace ---
+[tool call]   glossary_get_lecture_summary({'lecture': 2})
+[tool return] glossary_get_lecture_summary -> # 第2回 ファインチューニングとLoRA
+
+## この回のねらい
+
+- 事前学習とファインチューニングの違い、ファインチューニングが向く場面と向かない場面を理解する
+- LoRAの考え方を理解し、Google Colab上で小さなモデルを…
+[usage] 入力 5,942 tokens / 出力 224 tokens / モデル応答 2 回
